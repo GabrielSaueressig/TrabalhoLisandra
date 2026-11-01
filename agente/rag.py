@@ -1,51 +1,68 @@
-import os
-from pathlib import Path
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_ollama import OllamaEmbeddings
+"""RAG local: o material de referencia (state.md) e indexado com embeddings do
+Ollama em um indice FAISS salvo em disco. Os agentes recebem apenas os trechos
+relevantes para a pergunta, e o guardiao confere a resposta contra esses trechos."""
+import hashlib
 
-BASE_DIR = Path(__file__).resolve().parent
-DOC_PATH = BASE_DIR / "conhecimento" / "state.md"
-INDEX_PATH = BASE_DIR / "faiss_index"
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+from langchain_ollama import OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from . import config
+
+ARQUIVO_HASH = "material.sha256"
+
+
+def _hash_material(texto: str) -> str:
+    return hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
 
 class StateRAG:
-    def __init__(self):
-        # Usando embeddings
-        self.embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    def __init__(self, caminho_material=config.CONHECIMENTO, caminho_indice=config.INDICE_RAG):
+        self.caminho_material = caminho_material
+        self.caminho_indice = caminho_indice
+        self.embeddings = OllamaEmbeddings(model=config.MODELO_EMBEDDING, base_url=config.OLLAMA_URL)
         self.vectorstore = self._carregar_ou_criar_indice()
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 2})
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": config.RAG_K})
 
     def _carregar_ou_criar_indice(self):
-        if INDEX_PATH.exists():
-            return FAISS.load_local(
-                str(INDEX_PATH), 
-                self.embeddings, 
-                allow_dangerous_deserialization=True
-            )
- 
-        if not DOC_PATH.exists():
-            raise FileNotFoundError(f"Arquivo de conhecimento não encontrado em: {DOC_PATH}")
+        if not self.caminho_material.exists():
+            raise FileNotFoundError(f"Arquivo de conhecimento nao encontrado em: {self.caminho_material}")
+        texto = self.caminho_material.read_text(encoding="utf-8")
+        hash_atual = _hash_material(texto)
 
-        loader = TextLoader(str(DOC_PATH), encoding="utf-8")
-        docs = loader.load()
+        # Reaproveita o indice so se ele foi gerado a partir desta versao do material
+        arquivo_hash = self.caminho_indice / ARQUIVO_HASH
+        if arquivo_hash.exists() and arquivo_hash.read_text().strip() == hash_atual:
+            return FAISS.load_local(str(self.caminho_indice), self.embeddings,
+                                    allow_dangerous_deserialization=True)  # arquivo gerado por nos mesmos
 
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=600,
-            chunk_overlap=100,
-            separators=["\n## ", "\n### ", "\n\n", "\n", " "]
+        # Divide primeiro por secao (##), para cada trecho ser um assunto completo
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=config.RAG_TAMANHO_TRECHO,
+            chunk_overlap=150,
+            separators=["\n## ", "\n### ", "\n\n", "\n", " "],
         )
-        chunks = text_splitter.split_documents(docs)
+        trechos = splitter.split_documents([Document(page_content=texto, metadata={"fonte": "state.md"})])
 
-        vectorstore = FAISS.from_documents(chunks, self.embeddings)
-        vectorstore.save_local(str(INDEX_PATH))
+        vectorstore = FAISS.from_documents(trechos, self.embeddings)
+        vectorstore.save_local(str(self.caminho_indice))
+        arquivo_hash.write_text(hash_atual)
         return vectorstore
 
     def buscar_contexto(self, query: str) -> str:
         docs = self.retriever.invoke(query)
         if not docs:
-            return "Nenhum contexto específico encontrado."
-        return "\n\n---\n\n".join([d.page_content for d in docs])
+            return "Nenhum trecho do material foi encontrado para esta pergunta."
+        return "\n\n---\n\n".join(d.page_content for d in docs)
 
 
-rag_service = StateRAG()
+_instancia = None
+
+
+def get_rag_service() -> StateRAG:
+    """Cria o indice so na primeira busca, para o import nao exigir o Ollama."""
+    global _instancia
+    if _instancia is None:
+        _instancia = StateRAG()
+    return _instancia

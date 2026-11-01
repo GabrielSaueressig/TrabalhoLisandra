@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutor do Padrão State</title>
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --surface-2: #efede7;
+    --text: #1d1d1b;
+    --muted: #6b6a64;
+    --border: #e1ded6;
+    --accent: #2f6f5e;
+    --accent-text: #ffffff;
+    --accent-soft: #e3efea;
+    --user: #2f6f5e;
+    --user-text: #ffffff;
+    --code-bg: #1f2420;
+    --code-text: #e8ebe6;
+    --warn-bg: #fbf1dc;
+    --warn-text: #7a5410;
+    --note-bg: #e8eef8;
+    --note-text: #2b4a7a;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151714;
+      --surface: #1d201c;
+      --surface-2: #262a25;
+      --text: #ecebe6;
+      --muted: #9a9a92;
+      --border: #30342e;
+      --accent: #6cbfa6;
+      --accent-text: #0f1a16;
+      --accent-soft: #22332d;
+      --user: #2f6f5e;
+      --user-text: #f2f7f5;
+      --code-bg: #0f110f;
+      --code-text: #e1e5df;
+      --warn-bg: #3a2f17;
+      --warn-text: #f0cf8a;
+      --note-bg: #1f2a3b;
+      --note-text: #a9c3ec;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151714; --surface: #1d201c; --surface-2: #262a25; --text: #ecebe6; --muted: #9a9a92;
+    --border: #30342e; --accent: #6cbfa6; --accent-text: #0f1a16; --accent-soft: #22332d;
+    --user: #2f6f5e; --user-text: #f2f7f5; --code-bg: #0f110f; --code-text: #e1e5df;
+    --warn-bg: #3a2f17; --warn-text: #f0cf8a; --note-bg: #1f2a3b; --note-text: #a9c3ec; --shadow: none;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: var(--accent); color: var(--accent-text);
+    display: grid; place-items: center; font-weight: 700; flex: none;
+  }
+  .titulo { min-width: 0; }
+  .titulo h1 { font-size: 16px; margin: 0; line-height: 1.2; }
+  .titulo p { font-size: 13px; margin: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acoes { margin-left: auto; display: flex; gap: 8px; flex: none; }
+  .btn-sec {
+    background: transparent; border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font-size: 14px;
+  }
+  .btn-sec:hover { background: var(--surface-2); }
+
+  main { flex: 1; overflow-y: auto; }
+  .coluna { max-width: 780px; margin: 0 auto; padding: 24px 16px 8px; }
+
+  .boas-vindas { text-align: center; padding: 32px 0 8px; }
+  .boas-vindas h2 { font-size: 24px; margin: 0 0 8px; }
+  .boas-vindas p { color: var(--muted); margin: 0 auto 24px; max-width: 520px; }
+  .sugestoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; text-align: left; }
+  .sugestao {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; text-align: left; box-shadow: var(--shadow);
+  }
+  .sugestao:hover { border-color: var(--accent); }
+  .sugestao b { display: block; font-size: 13px; color: var(--accent); margin-bottom: 2px; }
+  .sugestao span { font-size: 14px; }
+
+  .msg { display: flex; margin: 16px 0; }
+  .msg.aluno { justify-content: flex-end; }
+  .balao { max-width: 100%; min-width: 0; }
+  .aluno .balao {
+    background: var(--user); color: var(--user-text);
+    padding: 10px 14px; border-radius: 16px 16px 4px 16px; max-width: 85%;
+    white-space: pre-wrap; word-wrap: break-word;
+  }
+  .tutor .balao {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 14px 18px; border-radius: 16px 16px 16px 4px; box-shadow: var(--shadow); width: 100%;
+  }
+  .meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .etiqueta {
+    background: var(--accent-soft); color: var(--accent);
+    padding: 2px 8px; border-radius: 999px; font-weight: 600;
+  }
+
+  .conteudo > :first-child { margin-top: 0; }
+  .conteudo > :last-child { margin-bottom: 0; }
+  .conteudo p { margin: 0 0 10px; }
+  .conteudo h3, .conteudo h4 { margin: 16px 0 6px; line-height: 1.3; }
+  .conteudo h3 { font-size: 17px; }
+  .conteudo h4 { font-size: 15px; }
+  .conteudo ul, .conteudo ol { margin: 0 0 10px; padding-left: 22px; }
+  .conteudo li { margin: 2px 0; }
+  .conteudo li.sub { margin-left: 20px; }
+  .conteudo hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+  .conteudo code {
+    font: 0.9em ui-monospace, "Cascadia Code", Consolas, monospace;
+    background: var(--surface-2); padding: 1px 5px; border-radius: 5px;
+  }
+  .codigo { position: relative; margin: 10px 0; }
+  .codigo pre {
+    margin: 0; background: var(--code-bg); color: var(--code-text);
+    padding: 14px 16px; border-radius: 10px; overflow-x: auto;
+    font: 13.5px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  .codigo pre code { background: none; padding: 0; font: inherit; color: inherit; }
+  .copiar {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(255,255,255,.08); color: var(--code-text);
+    border: 1px solid rgba(255,255,255,.15); border-radius: 6px; padding: 2px 8px; font-size: 12px;
+    opacity: 0; transition: opacity .15s;
+  }
+  .codigo:hover .copiar, .copiar:focus { opacity: 1; }
+  .aviso, .omitido { border-radius: 8px; padding: 8px 12px; margin: 10px 0; font-size: 14px; }
+  .aviso { background: var(--warn-bg); color: var(--warn-text); }
+  .omitido { background: var(--note-bg); color: var(--note-text); }
+
+  .pensando { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+  .pontos { display: inline-flex; gap: 4px; }
+  .pontos i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulso 1.2s infinite ease-in-out; }
+  .pontos i:nth-child(2) { animation-delay: .15s; }
+  .pontos i:nth-child(3) { animation-delay: .3s; }
+  @keyframes pulso { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+
+  footer { background: var(--bg); padding: 8px 16px 16px; }
+  .compositor {
+    max-width: 780px; margin: 0 auto;
+    display: flex; gap: 8px; align-items: flex-end;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 8px 8px 8px 14px; box-shadow: var(--shadow);
+  }
+  .compositor:focus-within { border-color: var(--accent); }
+  textarea {
+    flex: 1; border: 0; outline: 0; resize: none; background: transparent; color: var(--text);
+    font: inherit; max-height: 180px; padding: 6px 0;
+  }
+  .enviar {
+    background: var(--accent); color: var(--accent-text); border: 0; border-radius: 10px;
+    padding: 8px 16px; font-weight: 600; flex: none;
+  }
+  .enviar:disabled { opacity: .45; cursor: default; }
+  .dica { max-width: 780px; margin: 6px auto 0; font-size: 12px; color: var(--muted); text-align: center; }
+
+  @media (max-width: 560px) {
+    .titulo p { display: none; }
+    .btn-sec .rotulo-longo { display: none; }
+    .tutor .balao { padding: 12px 14px; }
+    .aluno .balao { max-width: 92%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" aria-hidden="true">S</div>
+  <div class="titulo">
+    <h1>Tutor do Padrão State</h1>
+    <p id="subtitulo">Sistema multiagente · modelo local</p>
+  </div>
+  <div class="acoes">
+    <button class="btn-sec" id="tema" title="Alternar tema claro/escuro" aria-label="Alternar tema">◐</button>
+    <button class="btn-sec" id="nova">Nova <span class="rotulo-longo">conversa</span></button>
+  </div>
+</header>
+
+<main id="rolagem">
+  <div class="coluna" id="conversa">
+    <section class="boas-vindas" id="boas-vindas">
+      <h2>Vamos aprender o padrão State?</h2>
+      <p>Pergunte o que quiser sobre o padrão, peça exemplos em Java ou um exercício. As respostas são geradas por agentes que rodam no seu computador e revisadas pelo Guardião.</p>
+      <div class="sugestoes" id="sugestoes"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <form class="compositor" id="form">
+    <textarea id="entrada" rows="1" placeholder="Escreva sua pergunta sobre o padrão State…" aria-label="Mensagem"></textarea>
+    <button class="enviar" id="enviar" type="submit">Enviar</button>
+  </form>
+  <div class="dica">Enter envia · Shift+Enter quebra linha · cada resposta pode levar de 10 a 60 s no modelo local</div>
+</footer>
+
+<script>
+(() => {
+  const SUGESTOES = [
+    ["Conceito", "Explique o que é o padrão State e qual problema ele resolve."],
+    ["Exemplo", "Dê um exemplo de aplicação do padrão State em Java."],
+    ["Quando usar", "Descreva uma situação em que o padrão State é a melhor escolha e uma em que ele deveria ser evitado."],
+    ["Uso incorreto", "Como o padrão State costuma ser aplicado de forma errada? Dê um exemplo e explique como corrigir."],
+    ["Confusões", "Com qual padrão o State é mais confundido? Explique a diferença."],
+    ["Praticar", "Quero praticar. Me passe um exercício sobre o padrão State."],
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const conversa = $("conversa"), rolagem = $("rolagem"), entrada = $("entrada"), enviar = $("enviar");
+  let ocupado = false;
+
+  // ---------- armazenamento por aba (opcional: a pagina funciona sem ele) ----------
+  const armazenar = {
+    ler(chave, padrao) { try { const v = sessionStorage.getItem(chave); return v ? JSON.parse(v) : padrao; } catch { return padrao; } },
+    gravar(chave, valor) { try { sessionStorage.setItem(chave, JSON.stringify(valor)); } catch {} },
+  };
+  const novoId = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  let sessao = armazenar.ler("sessao", null) || novoId();
+  let historico = armazenar.ler("historico", []);
+  armazenar.gravar("sessao", sessao);
+
+  // ---------- tema ----------
+  try { const t = localStorage.getItem("tema"); if (t) document.documentElement.dataset.theme = t; } catch {}
+  $("tema").addEventListener("click", () => {
+    const escuroAgora = document.documentElement.dataset.theme
+      ? document.documentElement.dataset.theme === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    const novo = escuroAgora ? "light" : "dark";
+    document.documentElement.dataset.theme = novo;
+    try { localStorage.setItem("tema", novo); } catch {}
+  });
+
+  // ---------- markdown minimo (titulos, listas, codigo, negrito) ----------
+  const escapar = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function inline(s) {
+    const codigos = [];
+    s = escapar(s).replace(/`([^`]+)`/g, (_, c) => { codigos.push(c); return `\u0000${codigos.length - 1}\u0000`; });
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+    return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codigos[i]}</code>`);
+  }
+  function blocosDeTexto(texto) {
+    const html = [];
+    let lista = null, paragrafo = [];
+    const fecharParagrafo = () => { if (paragrafo.length) { html.push(`<p>${paragrafo.join("<br>")}</p>`); paragrafo = []; } };
+    const fecharLista = () => { if (lista) { html.push(`<${lista.tipo}>${lista.itens.join("")}</${lista.tipo}>`); lista = null; } };
+    for (const linha of texto.split("\n")) {
+      const limpa = linha.trim();
+      let m;
+      if (!limpa) { fecharParagrafo(); fecharLista(); continue; }
+      if (/^\[(Codigo omitido|Trecho de codigo)/i.test(limpa)) {
+        fecharParagrafo(); fecharLista(); html.push(`<div class="omitido">${inline(limpa.replace(/^\[|\]$/g, ""))}</div>`); continue;
+      }
+      if (/^\((Aviso|Parte da resposta)/i.test(limpa)) {
+        fecharParagrafo(); fecharLista(); html.push(`<div class="aviso">${inline(limpa.replace(/^\(|\)$/g, ""))}</div>`); continue;
+      }
+      if ((m = limpa.match(/^(#{1,6})\s+(.*)$/))) {
+        fecharParagrafo(); fecharLista();
+        const nivel = m[1].length <= 3 ? "h3" : "h4";
+        html.push(`<${nivel}>${inline(m[2])}</${nivel}>`); continue;
+      }
+      if (/^(-{3,}|\*{3,}|_{3,})$/.test(limpa)) { fecharParagrafo(); fecharLista(); html.push("<hr>"); continue; }
+      const marcador = linha.match(/^(\s*)([-*•]|\d+[.)])\s+(.*)$/);
+      if (marcador) {
+        fecharParagrafo();
+        const tipo = /\d/.test(marcador[2]) ? "ol" : "ul";
+        if (!lista || (lista.tipo !== tipo && marcador[1].length < 2)) { fecharLista(); lista = { tipo, itens: [] }; }
+        const sub = marcador[1].length >= 2 ? ' class="sub"' : "";
+        lista.itens.push(`<li${sub}>${inline(marcador[3])}</li>`); continue;
+      }
+      if (lista && /^\s{2,}/.test(linha)) { // continuacao de um item
+        lista.itens[lista.itens.length - 1] = lista.itens[lista.itens.length - 1].replace(/<\/li>$/, `<br>${inline(limpa)}</li>`);
+        continue;
+      }
+      fecharLista(); paragrafo.push(inline(limpa));
+    }
+    fecharParagrafo(); fecharLista();
+    return html.join("");
+  }
+  function markdown(texto) {
+    // partes impares sao blocos de codigo (``` ... ```); um bloco sem fechamento vai ate o fim
+    return texto.split(/^[ \t]*```/m).map((parte, i) => {
+      if (i % 2 === 0) return blocosDeTexto(parte);
+      const quebra = parte.indexOf("\n");
+      const codigo = (quebra >= 0 ? parte.slice(quebra + 1) : "").replace(/\n[ \t]*$/, "");
+      return `<div class="codigo"><button class="copiar" type="button">Copiar</button><pre><code>${escapar(codigo)}</code></pre></div>`;
+    }).join("");
+  }
+
+  // ---------- mensagens ----------
+  function rolarParaFim() { rolagem.scrollTop = rolagem.scrollHeight; }
+
+  function adicionarMensagem(m) {
+    $("boas-vindas")?.remove();
+    const div = document.createElement("div");
+    div.className = `msg ${m.papel}`;
+    const balao = document.createElement("div");
+    balao.className = "balao";
+    if (m.papel === "aluno") {
+      balao.textContent = m.texto;
+    } else {
+      const meta = [];
+      if (m.agente) meta.push(`<span class="etiqueta">${escapar(m.agente)}</span>`);
+      if (m.segundos != null) meta.push(`<span>${String(m.segundos).replace(".", ",")} s</span>`);
+      balao.innerHTML = (meta.length ? `<div class="meta">${meta.join("")}</div>` : "") +
+        `<div class="conteudo">${markdown(m.texto)}</div>`;
+    }
+    div.appendChild(balao);
+    conversa.appendChild(div);
+    rolarParaFim();
+    return div;
+  }
+
+  function mostrarPensando() {
+    const div = document.createElement("div");
+    div.className = "msg tutor";
+    div.innerHTML = `<div class="balao"><div class="pensando"><span class="pontos"><i></i><i></i><i></i></span><span class="status">Roteador escolhendo o agente…</span></div></div>`;
+    conversa.appendChild(div);
+    rolarParaFim();
+    const status = div.querySelector(".status");
+    const inicio = Date.now();
+    const timer = setInterval(() => {
+      const s = Math.floor((Date.now() - inicio) / 1000);
+      const etapa = s < 4 ? "Roteador escolhendo o agente" : s < 25 ? "Agente escrevendo a resposta" : "Guardião revisando a resposta";
+      status.textContent = `${etapa}… ${s} s`;
+    }, 500);
+    return () => { clearInterval(timer); div.remove(); };
+  }
+
+  function salvar() { armazenar.gravar("historico", historico); }
+
+  async function perguntar(texto) {
+    texto = texto.trim();
+    if (!texto || ocupado) return;
+    ocupado = true; enviar.disabled = true;
+    entrada.value = ""; ajustarAltura();
+    const msgAluno = { papel: "aluno", texto };
+    historico.push(msgAluno); salvar(); adicionarMensagem(msgAluno);
+    const pararPensando = mostrarPensando();
+    let resposta;
+    try {
+      const r = await fetch("/api/mensagem", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessao, texto }),
+      });
+      const dados = await r.json();
+      resposta = r.ok
+        ? { papel: "tutor", texto: dados.texto, agente: dados.agente, segundos: dados.segundos }
+        : { papel: "tutor", texto: `(Aviso: o servidor recusou a mensagem: ${dados.erro || r.status})` };
+    } catch {
+      resposta = { papel: "tutor", texto: "(Aviso: não consegui falar com o servidor. Ele ainda está rodando? Execute python -m agente.web)" };
+    }
+    pararPensando();
+    historico.push(resposta); salvar(); adicionarMensagem(resposta);
+    ocupado = false; enviar.disabled = !entrada.value.trim();
+    entrada.focus();
+  }
+
+  // ---------- interacoes ----------
+  function ajustarAltura() { entrada.style.height = "auto"; entrada.style.height = Math.min(entrada.scrollHeight, 180) + "px"; }
+  entrada.addEventListener("input", () => { ajustarAltura(); enviar.disabled = ocupado || !entrada.value.trim(); });
+  entrada.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); perguntar(entrada.value); }
+  });
+  $("form").addEventListener("submit", (e) => { e.preventDefault(); perguntar(entrada.value); });
+
+  conversa.addEventListener("click", (e) => {
+    const botao = e.target.closest(".copiar");
+    if (!botao) return;
+    const codigo = botao.parentElement.querySelector("code").textContent;
+    navigator.clipboard?.writeText(codigo).then(() => {
+      botao.textContent = "Copiado"; setTimeout(() => (botao.textContent = "Copiar"), 1500);
+    }).catch(() => {});
+  });
+
+  $("nova").addEventListener("click", async () => {
+    if (ocupado) return;
+    try {
+      const r = await fetch("/api/nova", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessao }) });
+      sessao = (await r.json()).sessao || novoId();
+    } catch { sessao = novoId(); }
+    historico = []; armazenar.gravar("sessao", sessao); salvar();
+    location.reload();
+  });
+
+  const caixa = $("sugestoes");
+  for (const [rotulo, pergunta] of SUGESTOES) {
+    const b = document.createElement("button");
+    b.className = "sugestao"; b.type = "button";
+    b.innerHTML = `<b>${escapar(rotulo)}</b><span>${escapar(pergunta)}</span>`;
+    b.addEventListener("click", () => perguntar(pergunta));
+    caixa.appendChild(b);
+  }
+
+  fetch("/api/info").then((r) => r.json()).then((info) => {
+    $("subtitulo").textContent = `Sistema multiagente · modelo local ${info.modelo}`;
+  }).catch(() => {});
+
+  historico.forEach(adicionarMensagem);
+  enviar.disabled = true;
+  entrada.focus();
+})();
+</script>
+</body>
+</html>

@@ -8,5 +8,6 @@ def get_llm() -> ChatOllama:
         base_url=config.OLLAMA_URL,
         temperature=config.TEMPERATURA,
         num_predict=config.MAX_TOKENS_RESPOSTA,
+        num_ctx=config.JANELA_CONTEXTO,
         client_kwargs={"timeout": config.TIMEOUT_S},
     )
