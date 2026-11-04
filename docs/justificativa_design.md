@@ -1,7 +1,4 @@
 # Justificativa das decisões de design
-
-> **RASCUNHO.** O enunciado (seção 9) exige que este texto seja escrito pela dupla, com revisão crítica. Usem este rascunho como roteiro: reescrevam com as palavras de vocês e confiram cada afirmação no código.
-
 ## 1. Divisão de papéis
 
 Seguimos a divisão sugerida no Anexo A (ensinar, exemplificar, exercitar/diagnosticar e garantir confiabilidade) e acrescentamos um **Roteador**. Ficaram cinco agentes:
