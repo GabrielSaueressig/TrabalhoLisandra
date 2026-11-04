@@ -1,7 +1,5 @@
 # Caderno de evidências — avaliação entre pares
 
-> Modelo para preencher durante as sessões de 13/11. Copiem o bloco "Sistema avaliado" uma vez para cada sistema testado.
-
 ## Critérios de julgamento
 
 Cada resposta recebe uma nota de 0 a 2 em cada critério:
