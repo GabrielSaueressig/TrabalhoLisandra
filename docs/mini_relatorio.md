@@ -16,7 +16,7 @@
 
 1. **Versão 1 (commit `1c8c358`).** Grafo LangGraph com Roteador, Tutor, Exemplificador, Inquiridor e Guardião. O material inteiro era injetado no prompt. Já tinha CLI, memória (`MemorySaver`) e tratamento de erros.
 2. **Versão 2 (commit `020e153`, RAG).** O material passou a ser indexado com FAISS e embeddings locais (`nomic-embed-text`), e os agentes recebem só os trechos relevantes.
-3. **Versão 3 (revisão contra o enunciado).** [PREENCHER: descrever com as palavras de vocês.] Principais mudanças:
+3. **Versão 3 (revisão contra o enunciado).** Principais mudanças:
    - O índice era criado no `import`. Sem o Ollama no ar, até os testes quebravam e o programa morria com um traceback, sem a mensagem amigável. Agora ele é criado na primeira busca e é recriado quando o material muda (controle por hash).
    - O material (`state.md`) foi ampliado: problema com código "antes", colaborações, estrutura, segundo exemplo (ConexaoTCP, do livro GoF), quatro usos incorretos com correção, State vs Strategy, exercícios com resposta esperada e erros comuns, e um checklist de fechamento. Na versão anterior, o modelo inventava o que faltava (por exemplo, um `EstadoNovo.pagar()` que recusava o pagamento).
    - Todos os prompts passaram a seguir o Anexo B, incluindo a seção EXEMPLOS, e o Roteador e o Guardião ganharam ROLE/GOAL/BACKSTORY.
@@ -54,5 +54,12 @@
 | [PREENCHER: outras dificuldades de vocês] | |
 
 ## Declaração do uso de IA
+Durante o planejamento, codificação, testes e documentação do StateLearn, a dupla utilizou ferramentas externas de IA generativa (Gemini/ChatGPT e Claude) como assistentes ao gerar o relatório e suporte de programação.
 
-[PREENCHER e revisar: descrevam com honestidade quais ferramentas usaram e para quê.] Exemplo: usamos o assistente Claude (Anthropic), via Claude Code, para revisar o código contra o enunciado, corrigir o carregamento do RAG, ampliar o material de referência, escrever os testes automatizados e gerar rascunhos da documentação. Todo o conteúdo foi revisado pela dupla: conferimos o material sobre o padrão State com o livro GoF, executamos os testes e o roteiro e reescrevemos os textos com as nossas palavras. O sistema em si usa somente o modelo local `qwen2.5:7b`.
+Finalidades do Uso:
+Construção de Testes Automatizados e Mocks: Auxílio no desenho das classes de mock LLMFalso, RAGFalso, LLMQueEntregaCodigo e LLMPoliglota para permitir o teste isolado do grafo e do servidor HTTP sem dependência da LLM real.
+Desenvolvimento da Interface Web: Suporte no manuseio de rotas para garantir compatibilidade com utf-8 no Windows e isolamento de sessões.
+Documentação e Diagramas: Apoio na estruturação da sintaxe dos diagramas de sequência Mermaid e revisão textual do relatório técnico.
+Arquitetura do Grafo Multiagente: Esclarecimento de dúvidas técnicas sobre a estruturação de nós, definição de bordas condicionais e gerenciamento de estado compartilhado utilizando o LangGraph.
+Implementação do RAG Local via Ollama: Auxílio no projeto da pipeline de busca semântica, integrando o modelo de embeddings local, a divisão de documentos e a persistência no banco vetorial FAISS.
+
