@@ -46,6 +46,6 @@ O sistema tem cinco camadas (as duas primeiras são determinísticas, ou seja, n
 
 ## 6. Decisões técnicas
 
-- **LangGraph em vez de CrewAI**: o fluxo é um grafo explícito com arestas condicionais (roteamento e laço de revisão), fácil de testar com um LLM falso. [PREENCHER: confirmar que a escolha foi comunicada à professora.]
+- **LangGraph em vez de CrewAI**: o fluxo é um grafo explícito com arestas condicionais (roteamento e laço de revisão), fácil de testar com um LLM falso.
 - **qwen2.5:7b**: o modelo sugerido para 16 GB de RAM, com bom português. Temperatura 0,2 para respostas mais estáveis e limite de 700 tokens por resposta.
 - **Tratamento de erros**: entrada vazia, falha ou timeout do Ollama e saída vazia ou inesperada viram mensagens amigáveis. A falha do Guardião não derruba o sistema (a resposta é aprovada), e a falha do Roteador cai no Tutor.
