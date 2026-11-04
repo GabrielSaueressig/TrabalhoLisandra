@@ -1,6 +1,5 @@
 # Mini-relatório do processo de construção
 
-> **RASCUNHO.** O enunciado exige que este relatório seja escrito pela dupla, com reflexão própria. Os fatos abaixo saem do histórico do repositório e dos testes. Completem os trechos [PREENCHER] e reescrevam com a experiência de vocês.
 
 ## Ambiente de execução
 
@@ -12,8 +11,6 @@
 | Máquina | AMD Ryzen 7 5700X (8 núcleos), 32 GB de RAM, GPU NVIDIA RTX 3060 Ti 8 GB, Windows 10 Pro |
 | Python | 3.11.9 |
 | Custo | Zero: tudo roda localmente, sem chave de API nem serviço em nuvem |
-
-[PREENCHER: se a demonstração for feita em outra máquina, informar também a configuração dela.]
 
 ## Iterações
 
